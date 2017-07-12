@@ -68,14 +68,22 @@ Stickybit.prototype.manageStickiness = function manageStickiness() {
   const vp = this.vp
   const offset = this.offset
   const styles = this.styles
-  const classes = el.classList
   const win = window
   const rAF = win.requestAnimationFrame
 
   // setup css classes
-  parent.classList.add('js-stickybit-parent')
+  parent.className += ' js-stickybit-parent'
   const stickyClass = 'js-is-sticky'
   const stuckClass = 'js-is-stuck'
+  // r arg = removeClass
+  // a arg = addClass
+  function toggleClasses(r, a) {
+    const cArray = el.className.split(' ')
+    if (a && cArray.indexOf(a) === -1) cArray.push(a)
+    const rItem = cArray.indexOf(r)
+    if (rItem !== -1) cArray.splice(rItem, 1)
+    el.className = cArray.join(' ')
+  }
 
   // manageState
   const stickyStart = parent.getBoundingClientRect().top
@@ -92,8 +100,7 @@ Stickybit.prototype.manageStickiness = function manageStickiness() {
     if (notSticky) {
       state = 'sticky'
       rAF(() => {
-        classes.add(stickyClass)
-        if (classes.contains(stuckClass)) classes.remove(stuckClass)
+        toggleClasses(stuckClass, stickyClass)
         styles.bottom = ''
         styles.position = pv
         styles[vp] = `${offset}px`
@@ -101,14 +108,13 @@ Stickybit.prototype.manageStickiness = function manageStickiness() {
     } else if (isSticky) {
       state = 'default'
       rAF(() => {
-        classes.remove(stickyClass)
+        toggleClasses(stickyClass)
         if (pv === 'fixed') styles.position = ''
       })
     } else if (isStuck) {
       state = 'stuck'
       rAF(() => {
-        classes.remove(stickyClass)
-        classes.add(stuckClass)
+        toggleClasses(stickyClass, stuckClass)
         if (pv !== 'fixed') return
         styles.top = ''
         styles.bottom = '0'
@@ -135,8 +141,16 @@ Stickybit.prototype.cleanup = function cleanup() {
   styles.position = ''
   styles[this.vp] = ''
   // cleanup CSS classes
-  el.classList.remove('js-is-sticky', 'js-is-stuck')
-  el.parentNode.classList.remove('js-stickybit-parent')
+  function removeClass(selector, c) {
+    const s = selector
+    const cArray = s.className.split(' ')
+    const cItem = cArray.indexOf(c)
+    if (cItem !== -1) cArray.splice(cItem, 1)
+    s.className = cArray.join(' ')
+  }
+  removeClass(el, 'js-is-sticky')
+  removeClass(el, 'js-is-stuck')
+  removeClass(el.parentNode, 'js-stickybit-parent')
   // remove scroll event listener
   window.removeEventListener('scroll', this.manageState)
   // turn of sticky invocation
